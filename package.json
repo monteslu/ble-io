@@ -1,0 +1,32 @@
+{
+  "name": "ble-io",
+  "version": "1.0.0",
+  "description": "IO class for generic GPIO service over Bluetooth low energy",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/monteslu/ble-io.git"
+  },
+  "keywords": [
+    "ble",
+    "noble",
+    "bluetooth",
+    "johnny-five",
+    "robotics",
+    "nodebots"
+  ],
+  "author": "Luis Montes",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/monteslu/ble-io/issues"
+  },
+  "homepage": "https://github.com/monteslu/ble-io#readme",
+  "dependencies": {
+    "board-io": "^3.0.5",
+    "debug": "^2.6.8",
+    "noble": "^1.8.1"
+  }
+}
