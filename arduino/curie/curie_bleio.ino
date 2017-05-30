@@ -43,13 +43,22 @@ void setup() {
     states[i].value = 0;
     states[i].reportAnalog = 0;
     states[i].reportDigital = 0;
-    states[i].mode = OUTPUT;
+
+
+    if(IS_PIN_DIGITAL(i) && !IS_PIN_ANALOG(i)){
+      pinMode(i, OUTPUT);
+      states[i].mode = OUTPUT;
+    }
+    else{
+      pinMode(i, INPUT);
+      states[i].mode = INPUT;
+    }
   }
 
 
   // set the local name peripheral advertises
   // will likely default to board name + some of mac address
-  // blePeripheral.setLocalName("BLEIO");
+  //blePeripheral.setLocalName("BLEIO");
 
   // set the UUID for the service this peripheral advertises
   blePeripheral.setAdvertisedServiceUuid(gpioService.uuid());
