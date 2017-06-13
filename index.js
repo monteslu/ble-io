@@ -13,6 +13,24 @@ var REPORT_ANALOG = 0xC0;
 var REPORT_DIGITAL = 0xD0;
 var SAMPLING_INTERVAL = 0x7A;
 var PIN_MODE = 0xF4;
+var SERVO_CONFIG = 0x70;
+
+var MODES = {
+  INPUT: 0x00,
+  OUTPUT: 0x01,
+  ANALOG: 0x02,
+  PWM: 0x03,
+  SERVO: 0x04,
+  SHIFT: 0x05,
+  I2C: 0x06,
+  ONEWIRE: 0x07,
+  STEPPER: 0x08,
+  SERIAL: 0x0A,
+  PULLUP: 0x0B,
+  IGNORE: 0x7F,
+  PING_READ: 0x75,
+  UNKOWN: 0x10,
+};
 
 function lowByte(b){
   return b & 0xFF;
@@ -33,7 +51,7 @@ function compareUUIDs(a, b){
   return  b.indexOf(a) >= 0;
 }
 
-function BLEIO(options) {
+function Board(options) {
   // call super constructor
   BoardIO.call(this);
 
@@ -47,6 +65,8 @@ function BLEIO(options) {
   this.analogCharacteristicId = options.analogCharacteristicId || DEFAULT_ANALOG_CHARACTERISTIC;
   this.configCharacteristicId = options.configCharacteristicId || DEFAULT_CONFIG_CHARACTERISTIC;
   this.peripheral = options.peripheral;
+
+  this.MODES = MODES;
 
   // .. configure pins
   //this._pins.push(..);
@@ -176,9 +196,9 @@ function BLEIO(options) {
   }
 
 }
-util.inherits(BLEIO, BoardIO);
+util.inherits(Board, BoardIO);
 
-BLEIO.prototype.setSamplingInterval = function (interval) {
+Board.prototype.setSamplingInterval = function (interval) {
   debug('setSamplingInterval to', interval);
   if(interval > 255){
     return this.configChar.write(new Buffer([SAMPLING_INTERVAL, lowByte(interval), highByte(interval)]),true);
@@ -186,23 +206,23 @@ BLEIO.prototype.setSamplingInterval = function (interval) {
   this.configChar.write(new Buffer([SAMPLING_INTERVAL, interval]),true);
 }
 
-BLEIO.prototype.pwmWrite = function(pin, value) {
+Board.prototype.pwmWrite = function(pin, value) {
   this.analogChar.write(new Buffer([pin, lowByte(value), highByte(value)]),true);
 };
 
-BLEIO.prototype.analogWrite = BLEIO.prototype.pwmWrite;
+Board.prototype.analogWrite = Board.prototype.pwmWrite;
 
-BLEIO.prototype.digitalWrite = function(pin, value) {
+Board.prototype.digitalWrite = function(pin, value) {
   this.digitalChar.write(new Buffer([pin, value]),true);
 };
 
 
-BLEIO.prototype.digitalRead = function(pin, callback) {
+Board.prototype.digitalRead = function(pin, callback) {
   this.reportDigitalPin(pin, 1);
   this.addListener("digital-read-" + pin, callback);
 };
 
-BLEIO.prototype.reportDigitalPin = function(pin, value) {
+Board.prototype.reportDigitalPin = function(pin, value) {
   var port = pin >> 3;
   if (value === 0 || value === 1) {
     // TODO track this state?
@@ -211,12 +231,12 @@ BLEIO.prototype.reportDigitalPin = function(pin, value) {
   }
 };
 
-BLEIO.prototype.analogRead = function(pin, callback) {
+Board.prototype.analogRead = function(pin, callback) {
   this.reportAnalogPin(pin, 1);
   this.addListener("analog-read-" + pin, callback);
 };
 
-BLEIO.prototype.reportAnalogPin = function(pin, value) {
+Board.prototype.reportAnalogPin = function(pin, value) {
   if (value === 0 || value === 1) {
     // TODO track this?
     // this.pins[this.analogPins[pin]].report = value;
@@ -224,4 +244,45 @@ BLEIO.prototype.reportAnalogPin = function(pin, value) {
   }
 }
 
-module.exports = BLEIO;
+Board.prototype.servoConfig = function(pin, min, max) {
+  var temp;
+
+  if (typeof pin === "object" && pin !== null) {
+    temp = pin;
+    pin = temp.pin;
+    min = temp.min;
+    max = temp.max;
+  }
+
+  if (typeof pin === "undefined") {
+    throw new Error("servoConfig: pin must be specified");
+  }
+
+  if (typeof min === "undefined") {
+    throw new Error("servoConfig: min must be specified");
+  }
+
+  if (typeof max === "undefined") {
+    throw new Error("servoConfig: max must be specified");
+  }
+
+  this.pins[pin].mode = this.MODES.SERVO;
+
+  this.configChar.write(new Buffer([SERVO_CONFIG, pin, lowByte(min), highByte(min), lowByte(max), highByte(max)]),true);
+
+};
+
+BoardIO.prototype.pinMode = function (pin, mode) {
+
+  this.configChar.write(new Buffer([PIN_MODE, pin, mode], true));
+}
+
+Board.prototype.servoWrite = function(pin, value) {
+  // Values less than 544 will be treated as angles in degrees
+  // (valid values in microseconds are handled as microseconds)
+  console.log('servoWrite', pin, value);
+  this.analogWrite.apply(this, arguments);
+};
+
+
+module.exports = Board;
