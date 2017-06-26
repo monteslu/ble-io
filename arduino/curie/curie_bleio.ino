@@ -14,6 +14,7 @@
 #define lowByte(w) ((uint8_t) ((w) & 0xff))
 #define highByte(w) ((uint8_t) ((w) >> 8))
 
+
 #define I2C_WRITE                   B00000000
 #define I2C_READ                    B00001000
 #define I2C_READ_CONTINUOUSLY       B00010000
@@ -24,7 +25,7 @@
 #define I2C_STOP_TX                 1
 #define I2C_RESTART_TX              0
 #define I2C_MAX_QUERIES             8
-#define I2C_REGISTER_NOT_SPECIFIED  -1
+#define I2C_REGISTER_NOT_SPECIFIED  -1loo
 
 
 struct PinState {
@@ -37,6 +38,7 @@ struct PinState {
 uint16_t samplingInterval = 500;      // how often (milliseconds) to report analog data
 long currentMillis;     // store the current value from millis()
 long previousMillis;    // for comparison with currentMillis
+
 
 /* i2c data */
 struct i2c_device_info {
@@ -60,6 +62,7 @@ byte servoPinMap[TOTAL_PINS];
 byte detachedServos[MAX_SERVOS];
 byte detachedServoCount = 0;
 byte servoCount = 0;
+
 
 BLEPeripheral blePeripheral; // create peripheral instance
 
@@ -193,20 +196,27 @@ void blePeripheralDisconnectHandler(BLECentral& central) {
 
 void digitalCharWritten(BLECentral& central, BLECharacteristic& characteristic) {
 
-  Serial.println("digitalWrite: ");
-  uint8_t p = digitalChar.value()[0];
-  Serial.println(p);
-  uint8_t v = digitalChar.value()[1];
+  uint8_t len = digitalChar.valueLength();
 
-  if(IS_PIN_DIGITAL(p)){
-    if(v > 0){
-      digitalWrite(p, HIGH);
+  for (int i=0; i < (len / 2); i++) {
+
+    Serial.println("digitalWrite: ");
+    uint8_t p = digitalChar.value()[(i*2)+0];
+    Serial.println(p);
+    uint8_t v= digitalChar.value()[(i*2)+1];
+
+     if(IS_PIN_DIGITAL(p)){
+      if(v > 0){
+        digitalWrite(p, HIGH);
+      }
+      else{
+        digitalWrite(p, LOW);
+      }
+      Serial.print("digital written: ");
+      Serial.print(v);
     }
-    else{
-      digitalWrite(p, LOW);
-    }
-    Serial.print("digital written: ");
-    Serial.print(v);
+
+
   }
 
 
@@ -216,45 +226,59 @@ void analogCharWritten(BLECentral& central, BLECharacteristic& characteristic) {
 
   Serial.print("analogWrite bytes: ");
   uint8_t len = analogChar.valueLength();
+  uint8_t loopLen;
   Serial.println(len);
 
-  uint8_t p = analogChar.value()[0];
-  uint8_t v1= analogChar.value()[1];
-  uint8_t v2 = analogChar.value()[2];
-
-  Serial.print("p: ");
-  Serial.println(p);
-  Serial.print("v1: ");
-  Serial.println(v1);
-  Serial.print("v2: ");
-  Serial.println(v2);
-
-
-  if (p < TOTAL_PINS) {
-    uint16_t val = 0;
-    val+= v1;
-    if(len > 2){
-      val+= v2 << 8;
-    }
-    Serial.print("pwm/servo pin mode ");
-    Serial.println(Firmata.getPinMode(p));
-
-    if(Firmata.getPinMode(p) == PIN_MODE_SERVO){
-      if (IS_PIN_DIGITAL(p)){
-          servos[servoPinMap[p]].write(val);
-        }
-        Serial.print("servo wrote ");
-        Serial.println(val);
-
-    }
-    else if(IS_PIN_PWM(p)){
-      analogWrite(PIN_TO_PWM(p), val);
-
-      Serial.print("pwm wrote ");
-      Serial.println(val);
-    }
-    Firmata.setPinState(p, val);
+  //do at least 1 loop if only 2 bytes are sent
+  if(len == 2){
+    loopLen = 3;
   }
+  else{
+    loopLen = len;
+  }
+
+  for (int i=0; i < (loopLen / 3); i++) {
+
+    uint8_t p = analogChar.value()[(i*3)+0];
+    uint8_t v1= analogChar.value()[(i*3)+1];
+    uint8_t v2 = analogChar.value()[(i*3)+2];
+
+    Serial.print("p: ");
+    Serial.println(p);
+    Serial.print("v1: ");
+    Serial.println(v1);
+    Serial.print("v2: ");
+    Serial.println(v2);
+
+
+    if (p < TOTAL_PINS) {
+      uint16_t val = 0;
+      val+= v1;
+      if(len > 2){
+        val+= v2 << 8;
+      }
+      Serial.print("pwm/servo pin mode ");
+      Serial.println(Firmata.getPinMode(p));
+
+      if(Firmata.getPinMode(p) == PIN_MODE_SERVO){
+        if (IS_PIN_DIGITAL(p)){
+            servos[servoPinMap[p]].write(val);
+          }
+          Serial.print("servo wrote ");
+          Serial.println(val);
+
+      }
+      else if(IS_PIN_PWM(p)){
+        analogWrite(PIN_TO_PWM(p), val);
+
+        Serial.print("pwm wrote ");
+        Serial.println(val);
+      }
+      Firmata.setPinState(p, val);
+    }
+  }
+
+
 
 
 }
