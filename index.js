@@ -57,7 +57,19 @@ function Board(options) {
 
   options = options || {};
 
-  this._pins = options.pins || [];
+  this._pins = options.pins;
+  if(!this._pins) {
+    //no pin map supplied, default to 20 with everything
+    this._pins = [];
+    for(var i = 0; i < 20; i++){
+      this._pins.push({
+        supportedModes: [0,1,2,3,4,5,7,8],
+        mode: 1,
+        report: 0,
+        analogChannel: 0
+      });
+    }
+  }
 
   this.serviceId = options.serviceId || DEFAULT_SERVICE;
 
