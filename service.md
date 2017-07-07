@@ -26,7 +26,7 @@ a notify of `[9, 1]` means that pin 9 has been turned on.
 
 ### 2a58 Analog Characteristic
 
-This characteristic is for reading and writing analog values to pins.  Analog values come in at values 0-1023 and must be split across 2 bytes with Least Significant Bits first: LSB(bits 0-7) followed by the Most Significant Bits: MSB(bits 8-15).  However, simple 8-bit analog (PWM)[https://en.wikipedia.org/wiki/Pulse-width_modulation] writes do not need an MSB byte sent.
+This characteristic is for reading and writing analog values to pins.  Analog values come in at values 0-1023 and must be split across 2 bytes with Least Significant Bits first: LSB(bits 0-7) followed by the Most Significant Bits: MSB(bits 8-15).  However, simple 8-bit analog [PWM](https://en.wikipedia.org/wiki/Pulse-width_modulation) writes do not need an MSB byte sent.
 
 To write the PWM value 227 to pin 3
 write `[3, 227]`
