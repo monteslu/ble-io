@@ -521,58 +521,37 @@ void setPinMode(byte pin, int mode)
 
   switch (mode) {
     case PIN_MODE_ANALOG:
-      if(states[pin].ledcChannel == 255) {
-        states[pin].ledcChannel = ledcChannels;
-        ledcChannels++;
-        ledcAttachPin(pin, states[pin].ledcChannel);
-        ledcSetup(states[pin].ledcChannel, 12000, 8);
+        pinMode(pin, INPUT);
         states[pin].mode = mode;
-      }
       break;
     case PIN_MODE_INPUT:
-//      if (IS_PIN_DIGITAL(pin)) {
         pinMode(pin, INPUT); //PIN_TO_DIGITAL(pin), INPUT);    // disable output driver
-//        Firmata.setPinMode(pin, INPUT);
-//      }
+        states[pin].mode = mode;
       break;
     case PIN_MODE_PULLUP:
-//      if (IS_PIN_DIGITAL(pin)) {
         pinMode(pin, INPUT_PULLUP); //PIN_TO_DIGITAL(pin), INPUT_PULLUP);
         states[pin].mode = mode;
-//        Firmata.setPinMode(pin, PIN_MODE_PULLUP);
-//        Firmata.setPinState(pin, 1);
-//      }
       break;
     case PIN_MODE_OUTPUT:
-      pinMode(pin, OUTPUT);
-      states[pin].mode = mode;
-//      if (IS_PIN_DIGITAL(pin)) {
-//        if (Firmata.getPinMode(pin) == PIN_MODE_PWM) {
-//          // Disable PWM if pin mode was previously set to PWM.
-//          digitalWrite(PIN_TO_DIGITAL(pin), LOW);
-//        }
-//        pinMode(PIN_TO_DIGITAL(pin), OUTPUT);
-//        Firmata.setPinMode(pin, OUTPUT);
-//      }
+        pinMode(pin, OUTPUT);
+        states[pin].mode = mode;
       break;
     case PIN_MODE_PWM:
-      pinMode(pin, OUTPUT);
-      states[pin].mode = mode;
-//      if (IS_PIN_PWM(pin)) {
-//        pinMode(PIN_TO_PWM(pin), OUTPUT);
-//        analogWrite(PIN_TO_PWM(pin), 0);
-//        Firmata.setPinMode(pin, PIN_MODE_PWM);
-//      }
+        pinMode(pin, OUTPUT);
+        states[pin].mode = mode;
+        if(states[pin].ledcChannel == 255) {
+          states[pin].ledcChannel = ledcChannels;
+          ledcChannels++;
+          ledcAttachPin(pin, states[pin].ledcChannel);
+          ledcSetup(states[pin].ledcChannel, 12000, 8);
+        }
       break;
     case PIN_MODE_SERVO:
-//      if (IS_PIN_DIGITAL(pin)) {
-//        Firmata.setPinMode(pin, PIN_MODE_SERVO);
         if (servoPinMap[pin] == 255 || !servos[servoPinMap[pin]].attached()) {
           // pass -1 for min and max pulse values to use default values set
           // by Servo library
           attachServo(pin, -1, -1);
         }
-//      }
       break;
     case PIN_MODE_I2C:
 //      if (IS_PIN_I2C(pin)) {
