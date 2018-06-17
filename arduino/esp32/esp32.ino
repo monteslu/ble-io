@@ -333,7 +333,7 @@ void setup() {
     states[i].reportAnalog = 0;
     states[i].reportDigital = 0;
     states[i].ledcChannel = 255; //max because zero is a valid channel
-
+    servoPinMap[i] = 255; // initialise servo pin map states
 
 //   if(IS_PIN_DIGITAL(i) && !IS_PIN_ANALOG(i)){
 //      pinMode(i, OUTPUT);
@@ -551,6 +551,7 @@ void setPinMode(byte pin, int mode)
           // pass -1 for min and max pulse values to use default values set
           // by Servo library
           attachServo(pin, -1, -1);
+          states[pin].mode = mode;
         }
       break;
     case PIN_MODE_I2C:
